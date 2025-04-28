@@ -4,6 +4,7 @@ import 'package:chat_app/ui/others/user_provider.dart';
 import 'package:chat_app/ui/screens/bottom_navigation/Profile/profile_screen.dart';
 import 'package:chat_app/ui/screens/bottom_navigation/bottom_navigation_viewmodel.dart';
 import 'package:chat_app/ui/screens/bottom_navigation/chats_list/chats_list_screen.dart';
+import 'package:chat_app/ui/screens/home_screen/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -12,7 +13,7 @@ class BottomNavigationScreen extends StatelessWidget {
   const BottomNavigationScreen({super.key});
 
   static final List<Widget> _screens = [
-    const Center(child: Text('Home Screen')),
+    const HomeScreen(),
     const ChatsListScreen(),
     const ProfileScreen(),
   ];
@@ -23,7 +24,7 @@ class BottomNavigationScreen extends StatelessWidget {
 
     final items = [
       BottomNavigationBarItem(
-          icon: BottomNavButton(iconPath: homeIcon), label: 'Home'),
+          icon: BottomNavButton(iconPath: homeIcon), label: 'Find Friends'),
       BottomNavigationBarItem(
           icon: BottomNavButton(iconPath: chatsIcon), label: 'Chats'),
       BottomNavigationBarItem(
@@ -89,8 +90,8 @@ class CustomNavBar extends StatelessWidget {
           items: items,
           selectedItemColor: primary,
           unselectedItemColor: grey,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
         ),
       ),
@@ -109,11 +110,11 @@ class BottomNavButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: 10.h),
+      padding: EdgeInsets.only(top: 5.h),
       child: Image.asset(
         iconPath,
-        height: 30,
-        width: 30,
+        height: 24,
+        width: 24,
       ),
     );
   }

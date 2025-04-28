@@ -73,6 +73,9 @@ class SignupViewmodel extends BaseViewModel {
       final res = await _auth.signup(_email, _password);
 
       if (res != null) {
+        // Generate search keywords for the name
+        final nameSearch = UserModels.generateSearchKeywords(_name);
+
         // Create user profile in Firestore
         UserModels user = UserModels(
           uid: res.uid,
@@ -80,6 +83,7 @@ class SignupViewmodel extends BaseViewModel {
           email: _email,
           imageUrl: '',
           unreadCounter: 0,
+          nameSearch: nameSearch,
         );
         await _db.saveUser(user.toMap());
         log('User created and saved to database: ${user.name}');

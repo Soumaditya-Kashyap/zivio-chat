@@ -65,7 +65,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       children: [
                         10.verticalSpace,
                         _buildHeader(context,
-                            name: widget.receiver.name ?? 'Chat'),
+                            name: widget.receiver.name ?? 'Chat',
+                            isSelfChat: model.isSelfChat),
                         17.verticalSpace,
                         Expanded(
                           child: model.messages.isEmpty
@@ -84,8 +85,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                   itemBuilder: (context, index) {
                                     final message = model.messages[index];
                                     return ChatBubble(
-                                      isCurrentUser:
-                                          message.senderId == currentUser!.uid,
+                                      isCurrentUser: model.isSelfChat
+                                          ? true
+                                          : message.senderId ==
+                                              currentUser!.uid,
                                       message: message,
                                     );
                                   },
@@ -114,7 +117,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Row _buildHeader(BuildContext context, {String name = ''}) {
+  Row _buildHeader(BuildContext context, {String name = '', bool isSelfChat = false}) {
     return Row(
       children: [
         InkWell(
@@ -129,10 +132,14 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ),
         15.horizontalSpace,
-        Text(
-          name,
-          style: heading.copyWith(
-            fontSize: 20.sp,
+        Expanded(
+          child: Text(
+            name,
+            style: heading.copyWith(
+              fontSize: 20.sp,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         const Spacer(),

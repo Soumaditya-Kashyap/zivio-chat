@@ -55,20 +55,26 @@ class DatabaseService {
         .snapshots();
   }
 
-  // Search users by name
+  // Simple search users by name - more like Instagram
   Future<List<Map<String, dynamic>>> searchUsersByName(
       String query, String currentUserId) async {
     try {
-      // Convert the query to lowercase for case-insensitive search
-      String searchQuery = query.toLowerCase();
+      final queryLower = query.toLowerCase();
 
-      final res = await _fire
+      // Get all users except current user
+      final querySnapshot = await _fire
           .collection('users')
-          .where('nameSearch', arrayContains: searchQuery)
           .where('uid', isNotEqualTo: currentUserId)
           .get();
 
-      return res.docs.map((e) => e.data()).toList();
+      // Filter results client-side by name (simpler approach)
+      final results =
+          querySnapshot.docs.map((doc) => doc.data()).where((userData) {
+        final name = userData['name'] as String?;
+        return name != null && name.toLowerCase().contains(queryLower);
+      }).toList();
+
+      return results;
     } catch (e) {
       log('Error searching users: $e');
       rethrow;

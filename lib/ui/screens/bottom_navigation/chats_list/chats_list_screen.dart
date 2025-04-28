@@ -37,7 +37,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
       value: _viewModel,
       child: Consumer<ChatListViewmodel>(builder: (context, model, _) {
         return RefreshIndicator(
-          onRefresh: () => model.refreshUsers(),
+          onRefresh: () => model.refreshContacts(),
           child: Padding(
             padding:
                 EdgeInsets.symmetric(horizontal: 1.sw * 0.05, vertical: 10.h),
@@ -69,7 +69,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                                   ),
                                   10.verticalSpace,
                                   TextButton(
-                                    onPressed: () => model.refreshUsers(),
+                                    onPressed: () => model.refreshContacts(),
                                     child: Text(
                                       'Refresh',
                                       style: body.copyWith(color: primary),
@@ -92,6 +92,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                                   onTap: () => Navigator.pushNamed(
                                       context, chatRoom,
                                       arguments: user),
+                                  onDelete: () => model.deleteChatContact(user),
                                 );
                               },
                             ),
@@ -106,72 +107,79 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
 }
 
 class ChatTile extends StatelessWidget {
-  const ChatTile({super.key, this.onTap, required this.user});
+  const ChatTile({super.key, this.onTap, required this.user, this.onDelete});
 
   final void Function()? onTap;
+  final void Function()? onDelete;
   final UserModels user;
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      onTap: onTap,
-      tileColor: grey.withAlpha(30),
-      contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.r)),
-      leading: CircleAvatar(
-        backgroundColor: grey.withAlpha(75),
-        radius: 25,
-        child: user.imageUrl != null && user.imageUrl!.isNotEmpty
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(25),
-                child: Image.network(
-                  user.imageUrl!,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Text(
-                    user.name != null && user.name!.isNotEmpty
-                        ? user.name![0]
-                        : '?',
-                    style: heading,
+    return GestureDetector(
+      onLongPress: () {
+        _showDeleteDialog(context);
+      },
+      child: ListTile(
+        onTap: onTap,
+        tileColor: grey.withAlpha(30),
+        contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.r)),
+        leading: CircleAvatar(
+          backgroundColor: grey.withAlpha(75),
+          radius: 25,
+          child: user.imageUrl != null && user.imageUrl!.isNotEmpty
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(25),
+                  child: Image.network(
+                    user.imageUrl!,
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Text(
+                      user.name != null && user.name!.isNotEmpty
+                          ? user.name![0]
+                          : '?',
+                      style: heading,
+                    ),
                   ),
+                )
+              : Text(
+                  user.name != null && user.name!.isNotEmpty
+                      ? user.name![0]
+                      : '?',
+                  style: heading,
                 ),
-              )
-            : Text(
-                user.name != null && user.name!.isNotEmpty
-                    ? user.name![0]
-                    : '?',
-                style: heading,
-              ),
-      ),
-      title: Text(user.name ?? 'User'),
-      subtitle: Text(
-        user.lastMessage != null ? user.lastMessage!['content'] : '',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      trailing: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            user.lastMessage == null ? '' : getFormattedTime(),
-            style: TextStyle(color: grey),
-          ),
-          8.verticalSpace,
-          user.unreadCounter == 0 || user.unreadCounter == null
-              ? SizedBox(
-                  height: 15,
-                )
-              : CircleAvatar(
-                  radius: 9.r,
-                  backgroundColor: primary,
-                  child: Text(
-                    '${user.unreadCounter}',
-                    style: small.copyWith(color: white),
-                  ),
-                )
-        ],
+        ),
+        title: Text(user.name ?? 'User'),
+        subtitle: Text(
+          user.lastMessage != null ? user.lastMessage!['content'] : '',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              user.lastMessage == null ? '' : getFormattedTime(),
+              style: TextStyle(color: grey),
+            ),
+            8.verticalSpace,
+            user.unreadCounter == 0 || user.unreadCounter == null
+                ? SizedBox(
+                    height: 15,
+                  )
+                : CircleAvatar(
+                    radius: 9.r,
+                    backgroundColor: primary,
+                    child: Text(
+                      '${user.unreadCounter}',
+                      style: small.copyWith(color: white),
+                    ),
+                  )
+          ],
+        ),
       ),
     );
   }
@@ -195,5 +203,31 @@ class ChatTile extends StatelessWidget {
     } else {
       return "${lastMessageTime.day}/${lastMessageTime.month}/${lastMessageTime.year}";
     }
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Chat'),
+        content: Text(
+            'Do you want to delete this chat with ${user.name ?? "this user"}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (onDelete != null) {
+                onDelete!();
+              }
+              Navigator.pop(context);
+            },
+            child: Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 }

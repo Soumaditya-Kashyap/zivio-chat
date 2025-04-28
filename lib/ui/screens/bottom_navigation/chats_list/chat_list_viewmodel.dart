@@ -5,15 +5,17 @@ import 'package:chat_app/core/enums/enums.dart';
 import 'package:chat_app/core/models/user_models.dart';
 import 'package:chat_app/core/other/base_viewmodel.dart';
 import 'package:chat_app/core/services/database_service.dart';
+import 'package:chat_app/core/services/chat_service.dart';
 import 'package:flutter/material.dart';
 
 class ChatListViewmodel extends BaseViewModel {
   final DatabaseService _db;
+  final ChatService _chatService = ChatService();
   final UserModels _currentUser;
-  StreamSubscription? _userStream;
+  StreamSubscription? _chatContactsStream;
 
   ChatListViewmodel(this._db, this._currentUser) {
-    fetchUsers();
+    fetchChatContacts();
   }
 
   void search(String value) {
@@ -21,7 +23,9 @@ class ChatListViewmodel extends BaseViewModel {
       _filteredUsers = _users;
     } else {
       _filteredUsers = _users
-          .where((e) => e.name!.toLowerCase().contains(value.toLowerCase()))
+          .where((e) =>
+              e.name != null &&
+              e.name!.toLowerCase().contains(value.toLowerCase()))
           .toList();
     }
     notifyListeners();
@@ -36,23 +40,22 @@ class ChatListViewmodel extends BaseViewModel {
   bool _isLoading = true;
   bool get isLoading => _isLoading;
 
-  Future<void> fetchUsers() async {
+  Future<void> fetchChatContacts() async {
+    if (_currentUser.uid == null) {
+      log('Cannot fetch chat contacts: current user ID is null');
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     try {
       setState(ViewState.loading);
 
-      _userStream = _db.fetchUserStream(_currentUser.uid!).listen((data) {
+      _chatContactsStream =
+          _chatService.getChatContacts(_currentUser.uid!).listen((data) {
         _users = data.docs.map((e) => UserModels.fromMap(e.data())).toList();
 
-        // Sort users by last message timestamp if available
-        _users.sort((a, b) {
-          if (a.lastMessage == null && b.lastMessage == null) return 0;
-          if (a.lastMessage == null) return 1;
-          if (b.lastMessage == null) return -1;
-
-          return (b.lastMessage!['timestamp'] as int)
-              .compareTo(a.lastMessage!['timestamp'] as int);
-        });
-
+        // Sort by last message timestamp (already ordered in the query)
         _filteredUsers = _users;
 
         if (_isLoading) {
@@ -63,23 +66,46 @@ class ChatListViewmodel extends BaseViewModel {
         }
       });
     } catch (e) {
-      log('Error Fetching Users: $e');
+      log('Error fetching chat contacts: $e');
       _users = [];
       _isLoading = false;
-      setState(ViewState.idle); // Changed from error to idle
+      setState(ViewState.idle);
     }
   }
 
-  // Add method to refresh users list
-  Future<void> refreshUsers() async {
+  // Refresh the chat contacts list
+  Future<void> refreshContacts() async {
     _isLoading = true;
     notifyListeners();
-    await fetchUsers();
+    await fetchChatContacts();
+  }
+
+  // Delete a chat contact
+  Future<void> deleteChatContact(UserModels user) async {
+    if (_currentUser.uid == null || user.uid == null) {
+      log('Cannot delete chat contact: user ID is null');
+      return;
+    }
+
+    try {
+      setState(ViewState.loading);
+
+      // Delete the contact
+      await _chatService.deleteChatContact(_currentUser.uid!, user.uid!);
+
+      // Refresh the contacts list
+      await refreshContacts();
+
+      setState(ViewState.idle);
+    } catch (e) {
+      log('Error deleting chat contact: $e');
+      setState(ViewState.idle);
+    }
   }
 
   @override
   void dispose() {
-    _userStream?.cancel();
+    _chatContactsStream?.cancel();
     super.dispose();
   }
 }

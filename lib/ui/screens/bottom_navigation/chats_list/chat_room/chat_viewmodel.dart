@@ -11,6 +11,7 @@ class ChatViewmodel extends BaseViewModel {
   final ChatService _chatService;
   final UserModels _currentUser;
   final UserModels _receiver;
+  final bool _isSelfChat;
 
   StreamSubscription? _subscription;
 
@@ -18,11 +19,13 @@ class ChatViewmodel extends BaseViewModel {
     this._chatService,
     this._currentUser,
     this._receiver,
-  ) {
+  ) : _isSelfChat = _currentUser.uid == _receiver.uid {
     getChatRoom();
 
     // Reset unread counter for current user when opening chat
-    _chatService.resetUnreadCounter(_currentUser.uid!);
+    if (_currentUser.uid != null && _receiver.uid != null) {
+      _chatService.resetUnreadCounter(_currentUser.uid!, _receiver.uid!);
+    }
 
     _subscription = _chatService.getMessages(chatRoomId).listen((messages) {
       _messages = messages.docs.map((e) => Message.fromMap(e.data())).toList();
@@ -41,12 +44,19 @@ class ChatViewmodel extends BaseViewModel {
 
   List<Message> get messages => _messages;
 
+  bool get isSelfChat => _isSelfChat;
+
   getChatRoom() {
     // Create a consistent chat room ID by comparing UIDs
-    if (_currentUser.uid!.compareTo(_receiver.uid!) > 0) {
-      chatRoomId = '${_currentUser.uid}_${_receiver.uid}';
-    } else {
-      chatRoomId = "${_receiver.uid}_${_currentUser.uid}";
+    if (_currentUser.uid != null && _receiver.uid != null) {
+      if (_isSelfChat) {
+        // For self-chat, use a special format
+        chatRoomId = 'self_${_currentUser.uid}';
+      } else if (_currentUser.uid!.compareTo(_receiver.uid!) > 0) {
+        chatRoomId = '${_currentUser.uid}_${_receiver.uid}';
+      } else {
+        chatRoomId = "${_receiver.uid}_${_currentUser.uid}";
+      }
     }
   }
 
@@ -54,6 +64,10 @@ class ChatViewmodel extends BaseViewModel {
     log('Message Send');
 
     try {
+      if (_currentUser.uid == null || _receiver.uid == null) {
+        throw Exception('User data is incomplete');
+      }
+
       final now = DateTime.now();
       String content = _messageController.text.trim();
 
@@ -72,7 +86,7 @@ class ChatViewmodel extends BaseViewModel {
       // Save the message to Firestore
       await _chatService.saveMessage(message.toMap(), chatRoomId);
 
-      // Update last message for both users
+      // Update last message for both users and add to chat contacts if needed
       await _chatService.updateLastMessage(_currentUser.uid!, _receiver.uid!,
           content, now.millisecondsSinceEpoch);
 
