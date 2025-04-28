@@ -14,7 +14,7 @@ class CustomTextfield extends StatelessWidget {
     this.isSearch = false,
     this.controller,
     this.onTap,
-    this.isPassword=false,
+    this.isPassword = false,
   });
   final void Function(String)?
       onChanged; //This will be called when the user types something in the textfield
@@ -28,17 +28,17 @@ class CustomTextfield extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: isChatText ? 35.h : null,
+      height: isChatText ? 45.h : null,
       child: TextField(
         controller: controller,
-        focusNode: FocusNode(), // when
+        focusNode: focusNode,
         obscureText: isPassword,
-        onChanged:
-            onChanged, //When the user types something, onChanged will be called, it will help to update the value of the textfield
-
+        textCapitalization: TextCapitalization.sentences,
+        onChanged: onChanged,
         decoration: InputDecoration(
-          contentPadding:
-              isChatText ? EdgeInsets.symmetric(horizontal: 12.w) : null,
+          contentPadding: isChatText
+              ? EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h)
+              : null,
           filled: true,
           fillColor: isChatText ? white : grey.withAlpha(25),
           hintText: hintText,
@@ -57,7 +57,10 @@ class CustomTextfield extends StatelessWidget {
                   child: Image.asset(searchIcon),
                 )
               : isChatText
-                  ? InkWell(onTap: onTap, child: Icon(Icons.send))
+                  ? IconButton(
+                      onPressed: onTap,
+                      icon: Icon(Icons.send, color: primary),
+                    )
                   : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(isChatText ? 25.r : 10.r),

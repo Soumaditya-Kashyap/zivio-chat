@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ChatService {
   final _fire = FirebaseFirestore.instance;
 
-  saveMessage(Map<String, dynamic> message, String chatRoomId) async {
+  Future<void> saveMessage(
+      Map<String, dynamic> message, String chatRoomId) async {
     try {
       await _fire
           .collection('chatRooms')
@@ -15,10 +16,20 @@ class ChatService {
     }
   }
 
-  updateLastMessage(String currentUid, String receiverUid, String message,
-      int timestamp) async {
+  Future<void> updateLastMessage(String currentUid, String receiverUid,
+      String message, int timestamp) async {
     try {
+      // Update sender's last message
       await _fire.collection('users').doc(currentUid).update({
+        'lastMessage': {
+          "content": message,
+          'timestamp': timestamp,
+          'senderId': currentUid,
+        },
+      });
+
+      // Update receiver's last message and increment unread counter
+      await _fire.collection('users').doc(receiverUid).update({
         'lastMessage': {
           "content": message,
           'timestamp': timestamp,
@@ -26,13 +37,14 @@ class ChatService {
         },
         "unreadCounter": FieldValue.increment(1)
       });
+    } catch (e) {
+      rethrow;
+    }
+  }
 
-      await _fire.collection('users').doc(receiverUid).update({
-        'lastMessage': {
-          "content": message,
-          'timestamp': timestamp,
-          'senderId': currentUid,
-        },
+  Future<void> resetUnreadCounter(String userId) async {
+    try {
+      await _fire.collection('users').doc(userId).update({
         "unreadCounter": 0,
       });
     } catch (e) {

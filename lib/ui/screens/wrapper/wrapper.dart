@@ -18,18 +18,24 @@ class Wrapper extends StatelessWidget {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Text('Error');
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
           }
 
           final user = snapshot.data;
           if (user == null) {
-            log('User Loged Out');
+            log('User Logged Out');
+            // Clear user data when logged out
+            userProvider.clearUser();
             return const LoginScreen();
           } else {
             // Load user data when auth state changes
             WidgetsBinding.instance.addPostFrameCallback((_) {
               userProvider.loadUser(user.uid);
-              log('User loged In');
+              log('User Logged In: ${user.email}');
             });
             return const BottomNavigationScreen();
           }

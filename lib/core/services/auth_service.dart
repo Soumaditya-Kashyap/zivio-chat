@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print
 
+import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthService {
@@ -11,14 +12,14 @@ class AuthService {
           email: email, password: password);
 
       if (authCredential.user != null) {
-        print('User Created Succesfully');
+        log('User Created Successfully');
         return authCredential.user;
       }
     } on FirebaseAuthException catch (e) {
-      print(e.message);
+      log('Firebase Auth Error: ${e.code} - ${e.message}');
       rethrow;
     } catch (e) {
-      print(e.toString());
+      log('Error during signup: $e');
       rethrow;
     }
     return null;
@@ -30,14 +31,14 @@ class AuthService {
           email: email, password: password);
 
       if (authCredential.user != null) {
-        print('User loggedin successfully');
+        log('User logged in successfully');
         return authCredential.user;
       }
     } on FirebaseAuthException catch (e) {
-      print(e.message);
+      log('Firebase Auth Error: ${e.code} - ${e.message}');
       rethrow;
     } catch (e) {
-      print(e.toString());
+      log('Error during login: $e');
       rethrow;
     }
     return null;
@@ -46,9 +47,17 @@ class AuthService {
   Future<void> logout() async {
     try {
       await _auth.signOut();
+      log('User logged out successfully');
     } catch (e) {
-      print(e.toString());
+      log('Error during logout: $e');
       rethrow;
     }
   }
+
+  User? getCurrentUser() {
+    return _auth.currentUser;
+  }
+
+  Stream<User?> get userChanges => _auth.userChanges();
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
 }

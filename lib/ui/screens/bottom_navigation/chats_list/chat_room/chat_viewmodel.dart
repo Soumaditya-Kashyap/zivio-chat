@@ -21,8 +21,13 @@ class ChatViewmodel extends BaseViewModel {
   ) {
     getChatRoom();
 
+    // Reset unread counter for current user when opening chat
+    _chatService.resetUnreadCounter(_currentUser.uid!);
+
     _subscription = _chatService.getMessages(chatRoomId).listen((messages) {
       _messages = messages.docs.map((e) => Message.fromMap(e.data())).toList();
+      // Sort messages by timestamp
+      _messages.sort((a, b) => a.timestamp!.compareTo(b.timestamp!));
       notifyListeners();
     });
   }
@@ -37,44 +42,51 @@ class ChatViewmodel extends BaseViewModel {
   List<Message> get messages => _messages;
 
   getChatRoom() {
-    if (_currentUser.uid.hashCode > _receiver.uid.hashCode) {
+    // Create a consistent chat room ID by comparing UIDs
+    if (_currentUser.uid!.compareTo(_receiver.uid!) > 0) {
       chatRoomId = '${_currentUser.uid}_${_receiver.uid}';
     } else {
       chatRoomId = "${_receiver.uid}_${_currentUser.uid}";
     }
   }
 
-  saveMessage() async {
+  Future<void> saveMessage() async {
     log('Message Send');
 
     try {
       final now = DateTime.now();
-      if (_messageController.text.isEmpty) {
+      String content = _messageController.text.trim();
+
+      if (content.isEmpty) {
         throw Exception('Please Enter Some Text');
       }
 
       final message = Message(
         id: now.millisecondsSinceEpoch.toString(),
-        content: _messageController.text,
+        content: content,
         senderId: _currentUser.uid,
         receiverId: _receiver.uid,
         timestamp: now,
       );
+
+      // Save the message to Firestore
       await _chatService.saveMessage(message.toMap(), chatRoomId);
 
-      _chatService.updateLastMessage(_currentUser.uid!, _receiver.uid!,
-          message.content!, now.millisecondsSinceEpoch);
+      // Update last message for both users
+      await _chatService.updateLastMessage(_currentUser.uid!, _receiver.uid!,
+          content, now.millisecondsSinceEpoch);
 
       _messageController.clear();
     } catch (e) {
+      log('Error sending message: $e');
       rethrow;
     }
   }
 
   @override
   void dispose() {
-    super.dispose();
-
+    _messageController.dispose();
     _subscription?.cancel();
+    super.dispose();
   }
 }

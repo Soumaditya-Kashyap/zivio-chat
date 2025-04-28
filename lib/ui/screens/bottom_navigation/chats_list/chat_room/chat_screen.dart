@@ -12,61 +12,102 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, required this.receiver});
 
   final UserModels receiver;
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final currentUser = Provider.of<UserProvider>(context).user;
 
     return ChangeNotifierProvider(
-      create: (context) => ChatViewmodel(ChatService(), currentUser!, receiver),
+      create: (context) =>
+          ChatViewmodel(ChatService(), currentUser!, widget.receiver),
       child: Consumer<ChatViewmodel>(builder: (context, model, _) {
+        // Scroll to bottom when messages change
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
+        });
+
         return Scaffold(
-          body: Column(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 1.sw * 0.05, vertical: 10.h),
-                  child: Column(
-                    children: [
-                      35.verticalSpace,
-                      _buildHeader(context, name: receiver.name!),
-                      17.verticalSpace,
-                      Expanded(
-                        child: ListView.separated(
-                          padding: EdgeInsets.all(0),
-                          itemCount: model.messages.length,
-                          separatorBuilder: (context, index) =>
-                              10.verticalSpace,
-                          itemBuilder: (context, index) {
-                            final message = model.messages[index];
-                            return ChatBubble(
-                              isCurrentUser:
-                                  message.senderId == currentUser!.uid,
-                              message: message,
-                            );
-                          },
-                        ),
-                      )
-                    ],
+          body: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: 1.sw * 0.05, vertical: 10.h),
+                    child: Column(
+                      children: [
+                        10.verticalSpace,
+                        _buildHeader(context,
+                            name: widget.receiver.name ?? 'Chat'),
+                        17.verticalSpace,
+                        Expanded(
+                          child: model.messages.isEmpty
+                              ? Center(
+                                  child: Text(
+                                    'No messages yet. Start chatting!',
+                                    style: body.copyWith(color: grey),
+                                  ),
+                                )
+                              : ListView.separated(
+                                  controller: _scrollController,
+                                  padding: EdgeInsets.all(0),
+                                  itemCount: model.messages.length,
+                                  separatorBuilder: (context, index) =>
+                                      10.verticalSpace,
+                                  itemBuilder: (context, index) {
+                                    final message = model.messages[index];
+                                    return ChatBubble(
+                                      isCurrentUser:
+                                          message.senderId == currentUser!.uid,
+                                      message: message,
+                                    );
+                                  },
+                                ),
+                        )
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              BottomField(
-                controller: model.controller,
-                onTap: () async {
-                  try {
-                    await model.saveMessage();
-                  } catch (e) {
-                    context.showSnackBar(e.toString());
-                  }
-                },
-              )
-            ],
+                BottomField(
+                  controller: model.controller,
+                  onTap: () async {
+                    try {
+                      await model.saveMessage();
+                      _scrollToBottom();
+                    } catch (e) {
+                      context.showSnackBar(e.toString());
+                    }
+                  },
+                )
+              ],
+            ),
           ),
         );
       }),

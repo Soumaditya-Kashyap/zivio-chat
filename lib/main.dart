@@ -8,11 +8,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:chat_app/core/utils/route_utils.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: 'https://gmgymwmqhdteckfwaqhq.supabase.co',  // Your Supabase URL
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtZ3ltd21xaGR0ZWNrZndhcWhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIxMzUyMjAsImV4cCI6MjA1NzcxMTIyMH0.4f_BzadqaPFwdxWEkm6Ce3_w5d5oKPXhItHdZas0bHU',  // Your Supabase anon key
+  );
+
+  // Disable debug print
   debugPrint = (String? message, {int? wrapWidth}) {};
+
   runApp(const ChatApp());
 }
 
@@ -26,6 +38,7 @@ class ChatApp extends StatelessWidget {
             true //to debug the widgets that are rebuilt
         : debugPrintRebuildDirtyWidgets =
             false; //to debug the widgets that are rebuilt
+
     return ScreenUtilInit(
       builder: (context, child) => ChangeNotifierProvider(
         create: (context) => UserProvider(DatabaseService()),

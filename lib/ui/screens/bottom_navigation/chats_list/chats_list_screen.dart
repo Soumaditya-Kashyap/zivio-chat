@@ -121,12 +121,30 @@ class ChatTile extends StatelessWidget {
       leading: CircleAvatar(
         backgroundColor: grey.withAlpha(75),
         radius: 25,
-        child: Text(
-          user.name![0],
-          style: heading,
-        ),
+        child: user.imageUrl != null && user.imageUrl!.isNotEmpty
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(25),
+                child: Image.network(
+                  user.imageUrl!,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Text(
+                    user.name != null && user.name!.isNotEmpty
+                        ? user.name![0]
+                        : '?',
+                    style: heading,
+                  ),
+                ),
+              )
+            : Text(
+                user.name != null && user.name!.isNotEmpty
+                    ? user.name![0]
+                    : '?',
+                style: heading,
+              ),
       ),
-      title: Text(user.name!),
+      title: Text(user.name ?? 'User'),
       subtitle: Text(
         user.lastMessage != null ? user.lastMessage!['content'] : '',
         maxLines: 1,
@@ -137,7 +155,7 @@ class ChatTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Text(
-            user.lastMessage == null ? '' : getTime(),
+            user.lastMessage == null ? '' : getFormattedTime(),
             style: TextStyle(color: grey),
           ),
           8.verticalSpace,
@@ -158,19 +176,24 @@ class ChatTile extends StatelessWidget {
     );
   }
 
-  String getTime() {
-    DateTime now = DateTime.now();
+  String getFormattedTime() {
+    if (user.lastMessage == null) return '';
 
-    DateTime lastMessageTime = user.lastMessage == null
-        ? DateTime.now()
-        : DateTime.fromMillisecondsSinceEpoch(user.lastMessage!['timestamp']);
+    final DateTime now = DateTime.now();
+    final DateTime lastMessageTime = DateTime.fromMillisecondsSinceEpoch(
+        user.lastMessage!['timestamp'] as int);
+    final Duration difference = now.difference(lastMessageTime);
 
-    int minutes = now.difference(lastMessageTime).inMinutes % 60;
-
-    if (minutes < 60) {
-      return "$minutes minutes ago";
+    if (difference.inMinutes < 1) {
+      return 'Just now';
+    } else if (difference.inMinutes < 60) {
+      return "${difference.inMinutes}m ago";
+    } else if (difference.inHours < 24) {
+      return "${difference.inHours}h ago";
+    } else if (difference.inDays < 7) {
+      return "${difference.inDays}d ago";
     } else {
-      return "${now.difference(lastMessageTime).inHours % 24} hours ago";
+      return "${lastMessageTime.day}/${lastMessageTime.month}/${lastMessageTime.year}";
     }
   }
 }

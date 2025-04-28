@@ -8,32 +8,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-List<Widget> screens = [
-  ChatsListScreen(),
-  ChatsListScreen(),
-  ChatsListScreen(),
-];
-
 class BottomNavigationScreen extends StatelessWidget {
   const BottomNavigationScreen({super.key});
 
   static final List<Widget> _screens = [
-    Center(child: const Text('Home Screen')),
+    const Center(child: Text('Home Screen')),
     const ChatsListScreen(),
-    ProfileScreen(),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     final currentUser = Provider.of<UserProvider>(context).user;
+
     final items = [
       BottomNavigationBarItem(
-          label: '', icon: BottomNavButton(iconPath: homeIcon)),
+          icon: BottomNavButton(iconPath: homeIcon), label: 'Home'),
       BottomNavigationBarItem(
-          label: '', icon: BottomNavButton(iconPath: chatsIcon)),
+          icon: BottomNavButton(iconPath: chatsIcon), label: 'Chats'),
       BottomNavigationBarItem(
-          label: '', icon: BottomNavButton(iconPath: profileIcon)),
+          icon: BottomNavButton(iconPath: profileIcon), label: 'Profile'),
     ];
+
     return ChangeNotifierProvider(
       create: (context) => BottomNavigationViewmodel(),
       child: Consumer<BottomNavigationViewmodel>(builder: (context, model, _) {
@@ -42,8 +38,9 @@ class BottomNavigationScreen extends StatelessWidget {
                 child: CircularProgressIndicator(),
               )
             : Scaffold(
-                body: BottomNavigationScreen._screens[model.currentIndex],
+                body: _screens[model.currentIndex],
                 bottomNavigationBar: CustomNavBar(
+                  currentIndex: model.currentIndex,
                   onTap: model.setIndex,
                   items: items,
                 ),
@@ -58,10 +55,12 @@ class CustomNavBar extends StatelessWidget {
     super.key,
     this.onTap,
     required this.items,
+    required this.currentIndex,
   });
 
   final void Function(int)? onTap;
   final List<BottomNavigationBarItem> items;
+  final int currentIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +85,13 @@ class CustomNavBar extends StatelessWidget {
         borderRadius: borderRadius,
         child: BottomNavigationBar(
           onTap: onTap,
+          currentIndex: currentIndex,
           items: items,
+          selectedItemColor: primary,
+          unselectedItemColor: grey,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          type: BottomNavigationBarType.fixed,
         ),
       ),
     );
@@ -107,8 +112,8 @@ class BottomNavButton extends StatelessWidget {
       padding: EdgeInsets.only(top: 10.h),
       child: Image.asset(
         iconPath,
-        height: 40,
-        width: 40,
+        height: 30,
+        width: 30,
       ),
     );
   }

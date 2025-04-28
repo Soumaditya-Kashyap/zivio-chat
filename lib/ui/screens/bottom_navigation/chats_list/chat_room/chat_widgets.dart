@@ -22,7 +22,7 @@ class BottomField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: grey.withAlpha(60),
-      padding: EdgeInsets.symmetric(horizontal: 1.sw * 0.05, vertical: 25.h),
+      padding: EdgeInsets.symmetric(horizontal: 1.sw * 0.05, vertical: 15.h),
       child: Row(
         children: [
           InkWell(
@@ -77,23 +77,25 @@ class ChatBubble extends StatelessWidget {
       alignment: alignment,
       child: Container(
         constraints: BoxConstraints(maxWidth: 1.sw * 0.75, minWidth: 50.w),
-        padding: EdgeInsets.all(10),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isCurrentUser ? primary : grey.withAlpha(40),
           borderRadius: borderRadius,
         ),
         child: Column(
           crossAxisAlignment:
-              isCurrentUser ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+              isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(
-              message.content!,
+              message.content ?? '',
               style: body.copyWith(color: isCurrentUser ? white : null),
             ),
             5.verticalSpace,
             Text(
-              DateFormat('hh:mm a').format(message.timestamp!),
-              style: small.copyWith(color: isCurrentUser ? white : null),
+              message.timestamp != null
+                  ? DateFormat('hh:mm a').format(message.timestamp!)
+                  : '',
+              style: small.copyWith(color: isCurrentUser ? white : grey),
             )
           ],
         ),

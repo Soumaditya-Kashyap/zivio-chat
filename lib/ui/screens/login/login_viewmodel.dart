@@ -17,29 +17,39 @@ class LoginViewmodel extends BaseViewModel {
   String _email = '';
   String _password = '';
 
+  bool get isFormValid => _email.isNotEmpty && _password.isNotEmpty;
+
   void setEmail(String value) {
-    _email = value;
+    _email = value.trim();
     notifyListeners();
-    log("Email : $_email");
   }
 
   void setPassword(String value) {
-    _password = value;
+    _password = value.trim();
     notifyListeners();
-    log("Password : $_password");
   }
 
   Future<User?> login() async {
     setState(ViewState.loading);
     try {
+      // Validate inputs
+      if (_email.isEmpty) {
+        throw Exception('Please enter your email');
+      }
+
+      if (_password.isEmpty) {
+        throw Exception('Please enter your password');
+      }
+
       final user = await _auth.login(_email, _password);
       setState(ViewState.idle);
       return user;
-    } on FirebaseException catch (e) {
+    } on FirebaseAuthException catch (e) {
       setState(ViewState.idle);
+      log('FirebaseAuthException: ${e.code} - ${e.message}');
       rethrow;
     } catch (e) {
-      print(e.toString());
+      log('Error during login: $e');
       setState(ViewState.idle);
       rethrow;
     }
