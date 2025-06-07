@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:developer';
-
 import 'package:chat_app/core/enums/enums.dart';
 import 'package:chat_app/core/models/user_models.dart';
 import 'package:chat_app/core/other/base_viewmodel.dart';
