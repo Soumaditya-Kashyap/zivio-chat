@@ -29,6 +29,7 @@ class HomeScreen extends StatelessWidget {
         }
         return viewModel;
       },
+      
       child: Consumer<HomeViewmodel>(builder: (context, model, _) {
         return Scaffold(
           appBar: AppBar(
