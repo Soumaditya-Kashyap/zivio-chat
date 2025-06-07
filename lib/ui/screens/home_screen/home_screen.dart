@@ -47,6 +47,7 @@ class HomeScreen extends StatelessWidget {
               },
             ),
           ),
+          
           body: Column(
             children: [
               // Search bar
