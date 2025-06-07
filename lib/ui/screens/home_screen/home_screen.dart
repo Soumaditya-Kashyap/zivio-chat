@@ -68,6 +68,7 @@ class HomeScreen extends StatelessWidget {
                     : model.searchQuery.isEmpty
                         ? _buildSuggestionsSection()
                         : _buildSearchResults(model, context),
+                
               ),
             ],
           ),
